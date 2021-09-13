@@ -1,0 +1,134 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>A map with composite views</title>
+
+    <!--inline css-->
+    <style>
+        html,
+        body,
+        #mainViewDiv {
+          padding: 0;
+          margin: 0;
+          height: 100%;
+          width: 100%;
+        }
+    </style>
+
+    <!--online resources-->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.20/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.20/"></script>
+
+    <!--Javascript body-->
+    <script>
+        require(["esri/Map", "esri/WebMap","esri/views/MapView", "esri/Basemap", "esri/layers/FeatureLayer", "esri/layers/VectorTileLayer", "esri/widgets/Legend","esri/geometry/SpatialReference","esri/geometry/Extent","esri/widgets/Expand"], function(
+          Map, WebMap, MapView, Basemap, FeatureLayer, VectorTileLayer, Legend, SpatialReference, Extent, Expand) 
+        {
+         //Projection parameters              
+        {
+          // Albers Equal Area Projection for continental US
+          var conusSR = new SpatialReference('PROJCS["USA Contiguous Albers Equal Area Conic wkt",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Albers"],PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["central_meridian",-96],PARAMETER["Standard_Parallel_1",29.5],PARAMETER["Standard_Parallel_2",45.5],PARAMETER["latitude_of_origin",37.5],UNIT["Meter",1]]');
+          // Albers Equal Area projection for Alaska inset
+          var akSR = new SpatialReference('PROJCS["Alaska_Albers_Equal_Area_Conic",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Albers"],PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["central_meridian",-148],PARAMETER["Standard_Parallel_1",55],PARAMETER["Standard_Parallel_2",65],PARAMETER["latitude_of_origin",50],UNIT["Meter",1]]');
+          // Albers Equal Area projection for Hawaii inset
+          var hiSR = new SpatialReference('PROJCS["Hawaii_Albers_Equal_Area_Conic",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Albers"],PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["central_meridian",-157],PARAMETER["Standard_Parallel_1",8],PARAMETER["Standard_Parallel_2",18],PARAMETER["latitude_of_origin",13],UNIT["Meter",1]]');
+          // Albers Equal Area Projection for Puerto Rico inset
+          var prSR = new SpatialReference('PROJCS["ProjWiz_Custom_Albers",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Albers"], PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["Central_Meridian",-65.75],PARAMETER["Standard_Parallel_1",17],PARAMETER["Standard_Parallel_2",19],PARAMETER["Latitude_Of_Origin",18],UNIT["Meter",1.0]]');
+          // Transverse Cylindrical Equal Area Projection for Guam/Northern Marianas inset
+          var gunmSR = new SpatialReference('PROJCS["ProjWiz_Custom_Transverse_Cylindrical_Equal_Area",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],  UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Cylindrical_Equal_Area"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-215], PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]');
+          // Cylindrical Equal Area Projection for American Samoa inset
+          var asSR = new SpatialReference('PROJCS["ProjWiz_Custom_Cylindrical_Equal_Area",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Cylindrical_Equal_Area"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-170.7],PARAMETER["Standard_Parallel_1",7.5],UNIT["Meter",1.0]]');
+        } 
+        //grab any url parameters
+		function getUrlVar(name) {
+			var vars = [], hash;
+			if (window.location.href.indexOf('?') == -1) return null;
+
+			var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+			for (var i = 0; i < hashes.length; i++) {
+				hash = hashes[i].split('=');
+				hash[0] = hash[0].split('#')[0];
+				vars.push(hash[0]);
+				vars[hash[0]] = (hash[1] == undefined) ? "true" : hash[1];
+			}
+			return vars[name];
+		}
+        console.log(vars);
+        //Map data
+        let vtBasemap = new Basemap({
+            portalItem: {
+            id: "6a18d54141a4410182dc8a3d8b0111be"  
+            }
+        });
+        
+        var vectorLayer = new VectorTileLayer({
+          portalItem: {
+            id:"8a8d6e005f6c40f9b2882d83490ee78f"
+          }
+        });
+
+        var featureLayer = new FeatureLayer({
+            portalItem: {
+                id:"b7ccb77a8cc443e78f71be1a2fad6b8c"
+            }
+        })
+
+        var layerMap = new Map({
+          basemap: vtBasemap,
+          layers: [vectorLayer,featureLayer]
+        });
+        
+        const webmap = new WebMap ({
+         portalItem: { 
+           id: "0667333349d64c2b8a121d212f7e1157"  //my webmap with purpose-built feature service and custom vector tile basemap 
+           //id: "bde110be357743e6aa46700638180a1c"  //my copy of US Census Bureau webmap for Story Map Series with static tile basemap (WKID:102003)      
+           // id: "1fbe752bc61346f3a07ed7fbf5541a6e" //US Census Bureau webmap for Story Map Series
+         }
+       }); 
+        //choose to use webmap or jsapi map (constructed with layers)       
+        var map = webmap; //layerMap; 
+        //Map views
+        var mainView = new MapView({
+          container: "mainViewDiv",
+          map: map,
+          popup: {
+            highlightEnabled: true,
+            dockEnabled: true,
+            dockOptions: {
+              breakpoint: false,
+              buttonEnabled: false,
+              position: "top-center"
+            }
+          },
+          extent: {
+            xmin: -2600000,
+            ymin: -1400000,
+            xmax: 2500000,
+            ymax: 1600000,
+            spatialReference: conusSR
+          },
+          spatialReference: conusSR,
+          ui: {
+            components: ["attribution","zoom"]
+          } 
+        });
+        //map legend
+        const cardLegend = new Expand({
+          content: new Legend({
+            view: mainView,
+            style: "card"
+            }),
+          view: mainView,
+          expanded: false
+          })
+        mainView.ui.add(cardLegend, "bottom-right");
+
+    });   
+    </script>
+  </head>
+
+  <body>
+    <div id="mainViewDiv"></div>
+  </body>
+</html>
